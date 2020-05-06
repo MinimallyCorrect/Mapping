@@ -1,0 +1,121 @@
+buildscript {
+	repositories {
+		jcenter()
+		maven { url "https://plugins.gradle.org/m2/" }
+		maven {
+			url "https://maven.fabricmc.net"
+			content { desc ->
+				desc.includeGroup("net.fabricmc")
+			}
+		}
+	}
+	dependencies {
+		classpath 'org.minimallycorrect.gradle:DefaultsPlugin:0.0.54'
+	}
+}
+plugins {
+	id 'java'
+	id 'java-library'
+	id 'maven-publish'
+	id 'org.minimallycorrect.mixin.gradle-plugin' version '0.0.6-SNAPSHOT'
+	id 'dev.minco.mapping' version '0.0.1-SNAPSHOT'
+}
+
+import org.minimallycorrect.mixinplugin.deps.GeneratedDependency
+import org.minimallycorrect.mixinplugin.deps.MModuleComponentIdentifier
+import org.gradle.api.internal.file.FileCollectionInternal
+
+sourceSets.main.java.srcDirs = files('src')
+sourceSets.test.java.srcDirs = files('test')
+
+apply plugin: 'org.minimallycorrect.gradle.DefaultsPlugin'
+
+group = 'dev.minco.test'
+
+minimallyCorrectDefaults {
+	shipkit = false
+	languageLevel = JavaVersion.VERSION_11
+	configureProject(project)
+}
+
+repositories {
+	maven {
+		url 'https://maven.fabricmc.net/'
+		name 'fabricmc'
+		content { desc ->
+			desc.includeGroup("net.fabricmc")
+		}
+	}
+	jcenter()
+}
+
+def mcMappedAttribute = notLoom.getMappingArtifactForTarget("net.minecraft")
+
+notLoom {
+	def yarn115 = "net.fabricmc:yarn:1.15.2+build.9:v2"
+	registerMapping(project, "net.minecraft", "net.fabricmc:intermediary:1.15.2")
+	registerMapping(project, "net.minecraft", yarn115)
+	registerDefaultMappedConfiguration(project, "net.minecraft", "$yarn115:named")
+}
+
+def addSingleTargetRepo(String group, String module, String version, URL url) {
+	def repoUrl = url.protocol + "://" + url.host
+
+	println(repoUrl)
+	println(url.getPath())
+	repositories {
+		ivy { IvyArtifactRepository repo ->
+			repo.name("single target repo for " + url.getPath())
+			repo.url(repoUrl)
+			repo.patternLayout { layout ->
+				layout.artifact(url.getPath())
+			}
+			repo.metadataSources { metadata -> metadata.artifact() }
+			repo.content { content ->
+				content.includeVersion(group, module, version)
+			}
+		}
+	}
+
+	return configurations.detachedConfiguration(dependencies.create("$group:$module:$version"))
+}
+
+def generatedMinecraftMerged() {
+	// https://launchermeta.mojang.com/mc/game/version_manifest.json
+	def clientJar = new URL("https://launcher.mojang.com/v1/objects/e3f78cd16f9eb9a52307ed96ebec64241cc5b32d/client.jar")
+	def dlCfg = addSingleTargetRepo("net.minecraft", "minecraft", "1.15.2-obf-client", clientJar)
+	def file = dlCfg.fileCollection { Dependency spec ->
+		return true
+	}
+
+	// TODO: actually merge with server jar and use task's output file collection
+	// simple demo/test, enough to hit issue
+
+	// we could just do this, but that leaves the group/module/version unset
+	// makes so can't target with metadata rule
+	// return file
+
+	return new GeneratedDependency(new MModuleComponentIdentifier("net.minecraft", "minecraft", "1.15.2-obf-client"), (FileCollectionInternal) file)
+}
+
+dependencies {
+	implementation(generatedMinecraftMerged())
+
+	implementation 'com.google.code.gson:gson:2.8.6'
+	testImplementation 'junit:junit:4.12'
+
+	components { components ->
+		// doesn't seem to set attribute
+		components.withModule("net.minecraft:minecraft") { ComponentMetadataDetails rule ->
+		// successfully sets the attribute causing a compile failure as no transform exists
+		// components.withModule("com.google.code.gson:gson") { ComponentMetadataDetails rule ->
+			rule.allVariants { variant ->
+				variant.attributes {
+					container ->
+						println("set attr $mcMappedAttribute to obf")
+						container.attribute(mcMappedAttribute, "obf")
+				}
+			}
+		}
+	}
+}
