@@ -49,9 +49,9 @@ repositories {
 	jcenter()
 }
 
-def mcMappedAttribute = notLoom.getMappingArtifactForTarget("net.minecraft")
+def mcMappedAttribute = mapping.getMappingArtifactForTarget("net.minecraft")
 
-notLoom {
+mapping {
 	def yarn115 = "net.fabricmc:yarn:1.15.2+build.9:v2"
 	registerMapping(project, "net.minecraft", "net.fabricmc:intermediary:1.15.2")
 	registerMapping(project, "net.minecraft", yarn115)
