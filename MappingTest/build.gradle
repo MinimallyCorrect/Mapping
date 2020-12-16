@@ -17,15 +17,17 @@ plugins {
 	id 'java'
 	id 'java-library'
 	id 'maven-publish'
-	id 'org.minimallycorrect.mixin.gradle-plugin' version '0.0.6-SNAPSHOT'
+	//id 'org.minimallycorrect.mixin.gradle-plugin' version '0.0.6-SNAPSHOT'
 	id 'dev.minco.mapping' version '0.0.1-SNAPSHOT'
 }
 
 import dev.minco.mapping.GradleExtensions
 import dev.minco.mapping.LocalMavenWorkaround
+/*
 import org.minimallycorrect.mixinplugin.deps.GeneratedDependency
 import org.minimallycorrect.mixinplugin.deps.MModuleComponentIdentifier
 import org.gradle.api.internal.file.FileCollectionInternal
+ */
 
 sourceSets.main.java.srcDirs = files('src')
 sourceSets.test.java.srcDirs = files('test')
