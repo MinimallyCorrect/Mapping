@@ -30,6 +30,7 @@ minimallyCorrectDefaults {
 	// TODO: make relevant?
 	description = ""
 	labels = []
+	jacoco = false
 	configureProject(project)
 }
 
