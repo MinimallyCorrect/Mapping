@@ -51,7 +51,7 @@ dependencies { compileOnly gradleApi() }
 dependencies {
 	compileOnly "org.jetbrains:annotations:20.1.0"
 	compileOnly "org.checkerframework:checker-qual:3.5.0"
-	testImplementation "junit:junit:4.12"
+	testImplementation "junit:junit:4.13.1"
 	api 'org.minimallycorrect.mixin:Mixin:0.0.3'
 	implementation 'net.fabricmc:tiny-remapper:0.2.1.63'
 	implementation 'net.fabricmc:tiny-mappings-parser:0.2.1.13'
