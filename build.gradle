@@ -55,7 +55,7 @@ dependencies {
 	api 'org.minimallycorrect.mixin:Mixin:0.0.3'
 	implementation 'net.fabricmc:tiny-remapper:0.2.1.63'
 	implementation 'net.fabricmc:tiny-mappings-parser:0.2.1.13'
-	implementation 'com.google.guava:guava:30.0-jre'
+	implementation 'com.google.guava:guava:30.1-jre'
 
 	compileOnly 'org.projectlombok:lombok:1.18.16'
 	annotationProcessor 'org.projectlombok:lombok:1.18.16'
