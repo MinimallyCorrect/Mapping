@@ -1,12 +1,12 @@
 package dev.minco.mapping.action;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 
 import javax.annotation.Nullable;
 
-import dev.minco.mapping.util.Throw;
+import lombok.SneakyThrows;
+
 import net.fabricmc.mapping.tree.*;
 import net.fabricmc.tinyremapper.IMappingProvider;
 import net.fabricmc.tinyremapper.OutputConsumerPath;
@@ -15,6 +15,7 @@ import net.fabricmc.tinyremapper.TinyRemapper;
 public final class Remap {
 	private Remap() {}
 
+	@SneakyThrows
 	public static void run(Iterable<File> mappings, File input, File output, @Nullable String packageToMap) {
 		System.err.println("Remapping {" + input + "} to {" + output + "} for package {" + packageToMap + "}");
 
@@ -26,13 +27,12 @@ public final class Remap {
 			outputConsumer.addNonClassFiles(input.toPath());
 			remapper.readInputs(input.toPath());
 			remapper.apply(outputConsumer);
-		} catch (IOException e) {
-			throw Throw.sneaky(e);
 		} finally {
 			remapper.finish();
 		}
 	}
 
+	@SneakyThrows
 	private static IMappingProvider createFromFabric(File file) {
 		try (var br = Files.newBufferedReader(file.toPath())) {
 			TinyTree mapping = TinyMappingFactory.loadWithDetection(br);
@@ -40,8 +40,6 @@ public final class Remap {
 			System.out.println("file = " + file);
 			System.out.println(nses);
 			return createFromTinyTree(mapping, nses.get(0), nses.get(1), true);
-		} catch (IOException e) {
-			throw Throw.sneaky(e);
 		}
 	}
 

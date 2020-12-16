@@ -1,13 +1,17 @@
 package dev.minco.mapping;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+
+import lombok.SneakyThrows;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
@@ -17,10 +21,13 @@ import org.gradle.api.attributes.Attribute;
 import org.gradle.api.attributes.AttributeCompatibilityRule;
 import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
 
-import dev.minco.mapping.util.Throw;
+import com.google.common.base.MoreObjects;
+
 import net.fabricmc.mapping.reader.v2.TinyV2Factory;
+import net.fabricmc.mapping.tree.TinyMappingFactory;
 
 @SuppressWarnings("UnstableApiUsage")
 public abstract class MappingExtension {
@@ -30,7 +37,13 @@ public abstract class MappingExtension {
 	public static final String UNKNOWN_MAPPING = "UNKNOWN";
 	Attribute<String> artifactType = Attribute.of("artifactType", String.class);
 
+	protected abstract ListProperty<Function<String, String>> getMappingNamespaceTranslators();
+
 	protected abstract MapProperty<String, FileCollection> getRegisteredMappings();
+
+	public void registerNamespaceTranslator(Function<String, String> namespaceTranslator) {
+		getMappingNamespaceTranslators().add(namespaceTranslator);
+	}
 
 	public String registerMapping(Project project, String target, String coord) {
 		var registeredName = target + ':' + coord;
@@ -98,17 +111,60 @@ public abstract class MappingExtension {
 
 		project.getConfigurations().all(cfg -> {
 			if (findExtendsFromInTree(cfg, configs)) {
-				System.err.println("made " + cfg + " have attr " + mapped + "=" + mapping);
+				project.getLogger().lifecycle("made " + cfg + " have attr " + mapped + "=" + mapping);
 				cfg.getAttributes().attribute(mapped, mapping);
 			}
 		});
 
+		getMappingNamespaceTranslators().finalizeValue();
 		getRegisteredMappings().finalizeValue();
 		getRegisteredMappings().get().forEach((k, v) -> {
+			var prefix = target + ':';
+			if (!k.startsWith(prefix)) {
+				return;
+			}
+			var mappingCoord = k.substring(prefix.length());
 
+			project.getLogger().lifecycle("mapping " + k + " -> " + v + " -> " + v.getSingleFile());
+			var mappings = listMappings(v.getSingleFile()).stream().map(it -> mappingCoord + ":" + it).collect(Collectors.toList());
+			var simplified = mappings.stream().map(it -> {
+				for (Function<String, String> stringStringFunction : getMappingNamespaceTranslators().get()) {
+					it = MoreObjects.firstNonNull(stringStringFunction.apply(it), it);
+				}
+				return it;
+			}).distinct().collect(Collectors.toList());
+
+			if (mappings.size() != simplified.size()) {
+				throw new RuntimeException("Multiple mapping namespaces in the same mapping file simplified to the same entry." +
+					"\nInput: " + mappings + "" +
+					"\nOutput: " + simplified);
+			}
+
+			project.getLogger().lifecycle("" + mappings);
+
+			for (String a : simplified) {
+				for (String b : simplified) {
+					if (!a.equals(b)) {
+						registerSingleTransform(project, v, ArtifactTypeDefinition.JAR_TYPE, mapped, a, b);
+						registerSingleTransform(project, v, ArtifactTypeDefinition.JVM_CLASS_DIRECTORY, mapped, a, b);
+
+						project.getLogger().lifecycle("Registered transform from " + a + " -> " + b);
+					}
+				}
+			}
 		});
 
 		project.getLogger().lifecycle("added transformers to configs" + configs);
+	}
+
+	private void registerSingleTransform(Project project, FileCollection mappings, String type, Attribute<String> mapped, String a, String b) {
+		project.getDependencies().registerTransform(RemapTransform.class, remapParametersTransformSpec -> {
+			remapParametersTransformSpec.getFrom().attribute(artifactType, type).attribute(mapped, a);
+			remapParametersTransformSpec.getTo().attribute(artifactType, type).attribute(mapped, b);
+			remapParametersTransformSpec.parameters(parameters -> {
+				parameters.getMappings().from(mappings);
+			});
+		});
 	}
 
 	private void applyMappingsToConfiguration(Project project, String target, String mapping, Collection<String> configurations) {
@@ -116,7 +172,7 @@ public abstract class MappingExtension {
 
 		var schema = project.getDependencies().getAttributesSchema();
 		if (!schema.hasAttribute(mapped)) {
-			schema.attribute(mapped).getCompatibilityRules().add(MappedAttributeCompatibilityRule.class);
+			//schema.attribute(mapped).getCompatibilityRules().add(MappedAttributeCompatibilityRule.class);
 			project.getDependencies().getArtifactTypes().getByName(ArtifactTypeDefinition.JAR_TYPE).getAttributes().attribute(mapped, UNKNOWN_MAPPING);
 		}
 
@@ -131,11 +187,21 @@ public abstract class MappingExtension {
 		project.getLogger().lifecycle("applied attrs to configs " + configurations);
 	}
 
+	@SneakyThrows
 	private static List<String> listMappings(File mapping) {
-		try (var reader = Files.newBufferedReader(mapping.toPath())) {
+		try (var fs = FileSystems.newFileSystem(mapping.toPath(), (ClassLoader) null);
+			var reader = Files.newBufferedReader(fs.getPath("mappings", "mappings.tiny"))) {
+
+			reader.mark(8192);
+			String firstLine = reader.readLine();
+			String[] header = firstLine.split("\t");
+			reader.reset();
+
+			if (header[0].equals("v1")) {
+				return TinyMappingFactory.loadLegacy(reader).getMetadata().getNamespaces();
+			}
+
 			return TinyV2Factory.readMetadata(reader).getNamespaces();
-		} catch (IOException e) {
-			throw Throw.sneaky(e);
 		}
 	}
 

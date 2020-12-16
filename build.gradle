@@ -3,7 +3,7 @@ buildscript {
 		jcenter()
 		maven { url "https://plugins.gradle.org/m2/" }
 	}
-	dependencies { classpath 'org.minimallycorrect.gradle:DefaultsPlugin:0.0.54' }
+	dependencies { classpath 'org.minimallycorrect.gradle:DefaultsPlugin:0.1.5' }
 	configurations.classpath {
 		resolutionStrategy.activateDependencyLocking()
 	}
@@ -13,7 +13,7 @@ plugins {
 	id 'java-library'
 	id 'groovy'
 	id 'maven-publish'
-	id "com.gradle.plugin-publish" version "0.10.1"
+	id "com.gradle.plugin-publish" version "0.12.0"
 	id 'java-gradle-plugin'
 }
 
@@ -26,7 +26,6 @@ group = 'dev.minco.mapping'
 version = '0.0.1-SNAPSHOT'
 
 minimallyCorrectDefaults {
-	shipkit = false
 	languageLevel = JavaVersion.VERSION_11
 	// TODO: make relevant?
 	description = ""
@@ -44,12 +43,31 @@ repositories {
 	}
 }
 
+configurations.compile.dependencies.remove dependencies.gradleApi()
+configurations.all { it.dependencies.remove project.dependencies.gradleApi() }
+dependencies { compileOnly gradleApi() }
+
 dependencies {
-	compileOnly "org.checkerframework:checker-qual:3.1.0"
+	compileOnly "org.jetbrains:annotations:20.1.0"
+	compileOnly "org.checkerframework:checker-qual:3.5.0"
 	testImplementation "junit:junit:4.12"
 	api 'org.minimallycorrect.mixin:Mixin:0.0.3'
 	implementation 'net.fabricmc:tiny-remapper:0.2.1.63'
 	implementation 'net.fabricmc:tiny-mappings-parser:0.2.1.13'
+	implementation 'com.google.guava:guava:30.0-jre'
+
+	compileOnly 'org.projectlombok:lombok:1.18.16'
+	annotationProcessor 'org.projectlombok:lombok:1.18.16'
+	testCompileOnly 'org.projectlombok:lombok:1.18.16'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
+
+	// https://junit.org/junit5/docs/current/user-guide/#running-tests-build
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
+}
+
+test {
+	useJUnitPlatform()
 }
 
 allprojects {
@@ -62,6 +80,7 @@ allprojects {
 			resolutionStrategy {
 				failOnVersionConflict()
 
+				force('com.google.guava:guava:30.0-jre')
 				force('com.google.code.findbugs:jsr305:3.0.2')
 				def asmVer = '7.2'
 				force("org.ow2.asm:asm:$asmVer")
@@ -85,7 +104,7 @@ gradlePlugin {
 pluginBundle {
 	website = 'https://minco.dev/'
 	vcsUrl = 'https://github.com/MinimallyCorrect/Mapping'
-	// defaults plugin should copy those over
+	// TODO: defaults plugin should copy those over
 	description = 'TODO'
 	tags = ['TODO']
 

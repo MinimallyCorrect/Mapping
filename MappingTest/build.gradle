@@ -21,6 +21,8 @@ plugins {
 	id 'dev.minco.mapping' version '0.0.1-SNAPSHOT'
 }
 
+import dev.minco.mapping.GradleExtensions
+import dev.minco.mapping.LocalMavenWorkaround
 import org.minimallycorrect.mixinplugin.deps.GeneratedDependency
 import org.minimallycorrect.mixinplugin.deps.MModuleComponentIdentifier
 import org.gradle.api.internal.file.FileCollectionInternal
@@ -38,7 +40,13 @@ minimallyCorrectDefaults {
 	configureProject(project)
 }
 
+ext.repo = new File(project.buildDir, "mappingWorkaroundM2")
+
 repositories {
+	maven {
+		url repo
+		metadataSources.mavenPom()
+	}
 	maven {
 		url 'https://maven.fabricmc.net/'
 		name 'fabricmc'
@@ -56,38 +64,23 @@ mapping {
 	registerMapping(project, "net.minecraft", "net.fabricmc:intermediary:1.15.2")
 	registerMapping(project, "net.minecraft", yarn115)
 	registerDefaultMappedConfiguration(project, "net.minecraft", "$yarn115:named")
-}
-
-def addSingleTargetRepo(String group, String module, String version, URL url) {
-	def repoUrl = url.protocol + "://" + url.host
-
-	println(repoUrl)
-	println(url.getPath())
-	repositories {
-		ivy { IvyArtifactRepository repo ->
-			repo.name("single target repo for " + url.getPath())
-			repo.url(repoUrl)
-			repo.patternLayout { layout ->
-				layout.artifact(url.getPath())
-			}
-			repo.metadataSources { metadata -> metadata.artifact() }
-			repo.content { content ->
-				content.includeVersion(group, module, version)
-			}
+	registerNamespaceTranslator {
+		if (it == "$yarn115:intermediary") {
+			return "net.fabricmc:intermediary:1.15.2:intermediary"
 		}
 	}
-
-	return configurations.detachedConfiguration(dependencies.create("$group:$module:$version"))
 }
 
 def generatedMinecraftMerged() {
 	// https://launchermeta.mojang.com/mc/game/version_manifest.json
 	def clientJar = new URL("https://launcher.mojang.com/v1/objects/e3f78cd16f9eb9a52307ed96ebec64241cc5b32d/client.jar")
-	def dlCfg = addSingleTargetRepo("net.minecraft", "minecraft", "1.15.2-obf-client", clientJar)
+
+	def dlCfg = GradleExtensions.createSingleFileConfigurationForUrl(project, clientJar)
 	def file = dlCfg.fileCollection { Dependency spec ->
 		return true
 	}
 
+	LocalMavenWorkaround.createLocalMavenRepoForSingleFile(ext.repo, file.singleFile, "net.minecraft", "minecraft", "1.15.2-obf-client")
 	// TODO: actually merge with server jar and use task's output file collection
 	// simple demo/test, enough to hit issue
 
@@ -95,13 +88,14 @@ def generatedMinecraftMerged() {
 	// makes so can't target with metadata rule
 	// return file
 
-	return new GeneratedDependency(new MModuleComponentIdentifier("net.minecraft", "minecraft", "1.15.2-obf-client"), (FileCollectionInternal) file)
+	return "net.minecraft:minecraft:1.15.2-obf-client"
+
+	//return new GeneratedDependency(new MModuleComponentIdentifier("net.minecraft", "minecraft", "1.15.2-obf-client"), (FileCollectionInternal) file)
 }
 
 dependencies {
 	implementation(generatedMinecraftMerged())
 
-	implementation 'com.google.code.gson:gson:2.8.6'
 	testImplementation 'junit:junit:4.12'
 
 	components { components ->
@@ -112,8 +106,7 @@ dependencies {
 			rule.allVariants { variant ->
 				variant.attributes {
 					container ->
-						println("set attr $mcMappedAttribute to obf")
-						container.attribute(mcMappedAttribute, "obf")
+						container.attribute(mcMappedAttribute, "net.fabricmc:intermediary:1.15.2:official")
 				}
 			}
 		}
