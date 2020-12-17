@@ -84,7 +84,7 @@ allprojects {
 
 				force('com.google.guava:guava:30.0-jre')
 				force('com.google.code.findbugs:jsr305:3.0.2')
-				def asmVer = '7.2'
+				def asmVer = '9.0'
 				force("org.ow2.asm:asm:$asmVer")
 				force("org.ow2.asm:asm-tree:$asmVer")
 				force("org.ow2.asm:asm-analysis:$asmVer")
