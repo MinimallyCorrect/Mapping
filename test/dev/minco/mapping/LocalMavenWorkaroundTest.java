@@ -18,7 +18,7 @@ public class LocalMavenWorkaroundTest {
 
 	@Test
 	void testGeneratePom() {
-		val contents = LocalMavenWorkaround.generatePom("com.example.maven", "Maven", "1.1-SNAPSHOT").replace("\r", "");
+		val contents = LocalMavenWorkaround.generatePom("com.example.maven", "Maven", "1.1-SNAPSHOT", false).replace("\r", "");
 		val expected = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n" +
 			"<project>\n" +
 			"    <modelVersion>4.0.0</modelVersion>\n" +

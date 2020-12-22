@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,8 @@ import org.gradle.api.attributes.CompatibilityCheckDetails;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.MapProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.base.MoreObjects;
 
@@ -35,7 +38,7 @@ public abstract class MappingExtension {
 	 * indicates a dependency valid for ANY mapping used for unknown mapping, eg dependencies which don't specifiy their mapping
 	 */
 	public static final String UNKNOWN_MAPPING = "UNKNOWN";
-	Attribute<String> artifactType = Attribute.of("artifactType", String.class);
+	private static final Attribute<String> artifactType = Attribute.of("artifactType", String.class);
 
 	protected abstract ListProperty<Function<String, String>> getMappingNamespaceTranslators();
 
@@ -77,10 +80,10 @@ public abstract class MappingExtension {
 			configurations = Configurations.builtinCfgPrefixes;
 		}
 
-		project.getLogger().lifecycle("configs " + configurations);
 		applyMappingsToConfiguration(project, target, mapping, configurations);
 
-		project.afterEvaluate((proj) -> applyMappingTransformersToConfigs(proj, target, mapping, configurations));
+		applyMappingTransformersToConfigs(project, target, mapping, configurations);
+		//project.afterEvaluate((proj) -> applyMappingTransformersToConfigs(proj, target, mapping, configurations));
 	}
 
 	private static boolean findExtendsFromInTree(Configuration base, List<Configuration> targets) {
@@ -98,6 +101,11 @@ public abstract class MappingExtension {
 	}
 
 	private void applyMappingTransformersToConfigs(Project project, String target, String mapping, Collection<String> configurations) {
+		// Don't try to apply mappings if build already failed as this requires resolving deps
+		if (project.getState().getFailure() != null) {
+			return;
+		}
+
 		var mapped = getMappingArtifactForTarget(target);
 
 		List<Configuration> configs = new ArrayList<>();
@@ -111,7 +119,6 @@ public abstract class MappingExtension {
 
 		project.getConfigurations().all(cfg -> {
 			if (findExtendsFromInTree(cfg, configs)) {
-				project.getLogger().lifecycle("made " + cfg + " have attr " + mapped + "=" + mapping);
 				cfg.getAttributes().attribute(mapped, mapping);
 			}
 		});
@@ -125,7 +132,7 @@ public abstract class MappingExtension {
 			}
 			var mappingCoord = k.substring(prefix.length());
 
-			project.getLogger().lifecycle("mapping " + k + " -> " + v + " -> " + v.getSingleFile());
+			project.getLogger().debug("Getting transformations for " + k + " -> " + v.getSingleFile());
 			var mappings = listMappings(v.getSingleFile()).stream().map(it -> mappingCoord + ":" + it).collect(Collectors.toList());
 			var simplified = mappings.stream().map(it -> {
 				for (Function<String, String> stringStringFunction : getMappingNamespaceTranslators().get()) {
@@ -140,7 +147,7 @@ public abstract class MappingExtension {
 					"\nOutput: " + simplified);
 			}
 
-			project.getLogger().lifecycle("" + mappings);
+			project.getLogger().debug("Found mapped namespaces to set up transforms: " + mappings);
 
 			for (String a : simplified) {
 				for (String b : simplified) {
@@ -148,22 +155,18 @@ public abstract class MappingExtension {
 						registerSingleTransform(project, v, ArtifactTypeDefinition.JAR_TYPE, mapped, a, b);
 						registerSingleTransform(project, v, ArtifactTypeDefinition.JVM_CLASS_DIRECTORY, mapped, a, b);
 
-						project.getLogger().lifecycle("Registered transform from " + a + " -> " + b);
+						project.getLogger().lifecycle("\nRegistered transform for attr " + mapped + " from:\n\t" + a + " -> " + b);
 					}
 				}
 			}
 		});
-
-		project.getLogger().lifecycle("added transformers to configs" + configs);
 	}
 
 	private void registerSingleTransform(Project project, FileCollection mappings, String type, Attribute<String> mapped, String a, String b) {
-		project.getDependencies().registerTransform(RemapTransform.class, remapParametersTransformSpec -> {
-			remapParametersTransformSpec.getFrom().attribute(artifactType, type).attribute(mapped, a);
-			remapParametersTransformSpec.getTo().attribute(artifactType, type).attribute(mapped, b);
-			remapParametersTransformSpec.parameters(parameters -> {
-				parameters.getMappings().from(mappings);
-			});
+		project.getDependencies().registerTransform(RemapTransform.class, transformSpec -> {
+			transformSpec.getFrom().attribute(artifactType, type).attribute(mapped, a);
+			transformSpec.getTo().attribute(artifactType, type).attribute(mapped, b);
+			transformSpec.parameters(parameters -> {});
 		});
 	}
 
@@ -172,8 +175,12 @@ public abstract class MappingExtension {
 
 		var schema = project.getDependencies().getAttributesSchema();
 		if (!schema.hasAttribute(mapped)) {
-			//schema.attribute(mapped).getCompatibilityRules().add(MappedAttributeCompatibilityRule.class);
-			project.getDependencies().getArtifactTypes().getByName(ArtifactTypeDefinition.JAR_TYPE).getAttributes().attribute(mapped, UNKNOWN_MAPPING);
+			schema.attribute(mapped).getCompatibilityRules().add(MappedAttributeCompatibilityRule.class);
+			String defaultAttrValue = System.getProperty("dev.minco.mapping.defaultAttrValueTest");
+			if (defaultAttrValue == null) {
+				defaultAttrValue = UNKNOWN_MAPPING;
+			}
+			project.getDependencies().getArtifactTypes().getByName(ArtifactTypeDefinition.JAR_TYPE).getAttributes().attribute(mapped, defaultAttrValue);
 		}
 
 		for (Configuration configuration : project.getConfigurations()) {
@@ -181,10 +188,13 @@ public abstract class MappingExtension {
 				continue;
 			}
 
+			if (configuration.getAttributes().contains(mapped)) {
+				throw new RuntimeException("Mapped attribute already set. Attr: " + mapped + " current value " + configuration.getAttributes().getAttribute(mapped) + " wanted " + mapping);
+			}
 			configuration.getAttributes().attribute(mapped, mapping);
 		}
 
-		project.getLogger().lifecycle("applied attrs to configs " + configurations);
+		project.getLogger().debug("applied attrs to configs " + configurations);
 	}
 
 	@SneakyThrows
@@ -210,12 +220,19 @@ public abstract class MappingExtension {
 	}
 
 	public static class MappedAttributeCompatibilityRule implements AttributeCompatibilityRule<String> {
+		private static final Logger logger = LoggerFactory.getLogger(MappedAttributeCompatibilityRule.class);
+
 		@Override
 		public void execute(CompatibilityCheckDetails<String> details) {
-			System.err.println("Compatibility check ran, values: " + details.getProducerValue() + " -> " + details.getConsumerValue());
-			if (UNKNOWN_MAPPING.equals(details.getProducerValue())) {
+			var producer = details.getProducerValue();
+			var consumer = details.getConsumerValue();
+			boolean passed = UNKNOWN_MAPPING.equals(producer) || Objects.equals(producer, consumer);
+			if (passed) {
 				details.compatible();
+			} else {
+				details.incompatible();
 			}
+			logger.debug("Compatibility check ran, values: " + details.getProducerValue() + " -> " + details.getConsumerValue() + " = " + passed);
 		}
 	}
 }
