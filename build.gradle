@@ -50,7 +50,7 @@ dependencies { compileOnly gradleApi() }
 
 dependencies {
 	compileOnly "org.jetbrains:annotations:20.1.0"
-	compileOnly "org.checkerframework:checker-qual:3.5.0"
+	compileOnly "org.checkerframework:checker-qual:3.21.3"
 	testImplementation "junit:junit:4.13.1"
 	// TODO: actually test Mixin at the same time
 	//api 'org.minimallycorrect.mixin:Mixin:0.0.6'
