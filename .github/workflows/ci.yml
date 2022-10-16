@@ -12,7 +12,7 @@ jobs:
     verify-gradle-wrapper:
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791 # tag=v2
+            - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # tag=v3
             - uses: gradle/wrapper-validation-action@e2c57acffb2c9aa5a8dc6eda2bbae0b6e495bd4c # tag=v1.0.3
 
     build:
@@ -22,7 +22,7 @@ jobs:
             matrix:
                 jdk: [11, 15]
         steps:
-            - uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791 # tag=v2
+            - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # tag=v3
             - uses: actions/cache@9b0c1fce7a93df8e3bb8926b0d6e9d89e92f20a7 # tag=v3.0.11
               with:
                 path: |
