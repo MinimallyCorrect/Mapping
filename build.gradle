@@ -1,26 +1,13 @@
-buildscript {
-	repositories {
-		jcenter()
-		maven { url "https://plugins.gradle.org/m2/" }
-	}
-	dependencies { classpath 'org.minimallycorrect.gradle:DefaultsPlugin:0.1.5' }
-	configurations.classpath {
-		resolutionStrategy.activateDependencyLocking()
-	}
-}
 plugins {
-	id 'java'
 	id 'java-library'
-	id 'groovy'
 	id 'maven-publish'
-	id "com.gradle.plugin-publish" version "0.12.0"
+	id "com.gradle.plugin-publish" version "0.15.0"
 	id 'java-gradle-plugin'
+	id("dev.minco.gradle.defaults-plugin") version "0.2.62"
 }
 
 sourceSets.main.java.srcDirs = files('src')
 sourceSets.test.java.srcDirs = files('test')
-
-apply plugin: 'org.minimallycorrect.gradle.DefaultsPlugin'
 
 group = 'dev.minco.mapping'
 version = '0.0.1-SNAPSHOT'
@@ -29,8 +16,6 @@ minimallyCorrectDefaults {
 	languageLevel = JavaVersion.VERSION_11
 	// TODO: make relevant?
 	description = ""
-	labels = []
-	jacoco = false
 	configureProject(project)
 }
 
@@ -42,11 +27,8 @@ repositories {
 			includeGroup("net.fabricmc")
 		}
 	}
+	mavenCentral()
 }
-
-configurations.compile.dependencies.remove dependencies.gradleApi()
-configurations.all { it.dependencies.remove project.dependencies.gradleApi() }
-dependencies { compileOnly gradleApi() }
 
 dependencies {
 	compileOnly "org.jetbrains:annotations:23.0.0"
@@ -58,10 +40,10 @@ dependencies {
 	implementation 'net.fabricmc:tiny-mappings-parser:0.2.2.14'
 	implementation 'com.google.guava:guava:30.1-jre'
 
-	compileOnly 'org.projectlombok:lombok:1.18.16'
-	annotationProcessor 'org.projectlombok:lombok:1.18.16'
-	testCompileOnly 'org.projectlombok:lombok:1.18.16'
-	testAnnotationProcessor 'org.projectlombok:lombok:1.18.16'
+	compileOnly 'org.projectlombok:lombok:1.18.20'
+	annotationProcessor 'org.projectlombok:lombok:1.18.20'
+	testCompileOnly 'org.projectlombok:lombok:1.18.20'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.20'
 
 	// https://junit.org/junit5/docs/current/user-guide/#running-tests-build
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
@@ -84,7 +66,7 @@ allprojects {
 
 				force('com.google.guava:guava:30.0-jre')
 				force('com.google.code.findbugs:jsr305:3.0.2')
-				def asmVer = '9.0'
+				def asmVer = '9.2'
 				force("org.ow2.asm:asm:$asmVer")
 				force("org.ow2.asm:asm-tree:$asmVer")
 				force("org.ow2.asm:asm-analysis:$asmVer")
