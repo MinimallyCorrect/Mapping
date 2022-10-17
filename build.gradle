@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'maven-publish'
-	id "com.gradle.plugin-publish" version "0.21.0"
+	id "com.gradle.plugin-publish" version "1.0.0"
 	id 'java-gradle-plugin'
 	id("dev.minco.gradle.defaults-plugin") version "0.2.62"
 }
