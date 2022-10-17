@@ -151,3 +151,14 @@ dependencies {
 		}
 	}
 }
+allprojects {
+	configurations {
+		all {
+			resolutionStrategy {
+				failOnVersionConflict()
+				failOnNonReproducibleResolution()
+
+			}
+		}
+	}
+}
