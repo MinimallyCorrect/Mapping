@@ -1,7 +1,7 @@
 plugins {
 	id 'java-library'
 	id 'maven-publish'
-	id "com.gradle.plugin-publish" version "0.21.0"
+	id "com.gradle.plugin-publish" version "1.0.0"
 	id 'java-gradle-plugin'
 	id("dev.minco.gradle.defaults-plugin") version "0.2.62"
 }
@@ -82,6 +82,7 @@ gradlePlugin {
 		mapping {
 			id = 'dev.minco.mapping'
 			implementationClass = 'dev.minco.mapping.Plugin'
+			displayName = 'Mapping'
 		}
 	}
 }
@@ -92,12 +93,6 @@ pluginBundle {
 	// TODO: defaults plugin should copy those over
 	description = 'TODO'
 	tags = ['TODO']
-
-	plugins {
-		mapping {
-			displayName = 'Mapping'
-		}
-	}
 }
 
 publishing {
