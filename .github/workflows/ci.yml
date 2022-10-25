@@ -13,7 +13,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # tag=v3.1.0
-            - uses: gradle/wrapper-validation-action@e6e38bacfdf1a337459f332974bb2327a31aaf4b # tag=v1.0.4
+            - uses: gradle/wrapper-validation-action@55e685c48d84285a5b0418cd094606e199cca3b6 # tag=v1.0.5
 
     build:
         if: "! contains(toJSON(github.event.commits.*.message), '[skip ci]')"
@@ -32,7 +32,7 @@ jobs:
                 restore-keys: |
                     ${{ runner.os }}-jdk-${{ matrix.jdk }}-gradlewrapper-${{ hashFiles('**/gradle-wrapper.properties') }}-gradlescripts-
             - name: Set up JDK
-              uses: actions/setup-java@a18c333f3f14249953dab3e186e5e21bf3390f1d # tag=v3.5.1
+              uses: actions/setup-java@de1bb2b0c5634f0fc4438d7aa9944e68f9bf86cc # tag=v3.6.0
               with:
                   distribution: adopt
                   java-version: ${{ matrix.jdk }}
