@@ -58,7 +58,7 @@ repositories {
 }
 
 def mcMappedAttribute = mapping.getMappingArtifactForTarget("net.minecraft")
-ext.aValidAttrValueWhichCanBeTransformedToRequired = "net.fabricmc:intermediary:1.15.2:intermediary"
+ext.aValidAttrValueWhichCanBeTransformedToRequired = "net.fabricmc:intermediary:22w13oneblockatatime:intermediary"
 ext.moduleMetadataAttrValue = ext.aValidAttrValueWhichCanBeTransformedToRequired
 ext.setComponentMetadataRule = false
 ext.attrDefaultValue = null
