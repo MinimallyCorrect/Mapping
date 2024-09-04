@@ -16,7 +16,7 @@ plugins {
 	id 'maven-publish'
 	//id 'org.minimallycorrect.mixin.gradle-plugin' version '0.0.6-SNAPSHOT'
 	id 'dev.minco.mapping' version '0.0.1-SNAPSHOT'
-	id("dev.minco.gradle.defaults-plugin") version "0.2.62"
+	id("dev.minco.gradle.defaults-plugin") version "0.2.67"
 }
 
 import dev.minco.mapping.GradleExtensions
@@ -58,7 +58,7 @@ repositories {
 }
 
 def mcMappedAttribute = mapping.getMappingArtifactForTarget("net.minecraft")
-ext.aValidAttrValueWhichCanBeTransformedToRequired = "net.fabricmc:intermediary:1.15.2:intermediary"
+ext.aValidAttrValueWhichCanBeTransformedToRequired = "net.fabricmc:intermediary:1.21.1:intermediary"
 ext.moduleMetadataAttrValue = ext.aValidAttrValueWhichCanBeTransformedToRequired
 ext.setComponentMetadataRule = false
 ext.attrDefaultValue = null
@@ -96,12 +96,12 @@ System.err.println("default attr value overridden: " + ext.attrDefaultValue)
 System.err.println("This build is expected to fail with the error \"TODO: Actually transform.\". If build succeeds, transforms weren't ran as expected.\n")
 
 mapping {
-	def yarn115 = "net.fabricmc:yarn:1.15.2+build.9:v2"
+	def yarn115 = "net.fabricmc:yarn:1.21.1+build.3:v2"
 	registerMapping(project, "net.minecraft", "net.fabricmc:intermediary:1.15.2")
 	registerMapping(project, "net.minecraft", yarn115)
 	registerNamespaceTranslator {
 		if (it == "$yarn115:intermediary") {
-			return "net.fabricmc:intermediary:1.15.2:intermediary"
+			return "net.fabricmc:intermediary:1.21.1:intermediary"
 		}
 	}
 	registerDefaultMappedConfiguration(project, "net.minecraft", "$yarn115:named")
