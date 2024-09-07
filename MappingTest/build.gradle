@@ -96,7 +96,7 @@ System.err.println("default attr value overridden: " + ext.attrDefaultValue)
 System.err.println("This build is expected to fail with the error \"TODO: Actually transform.\". If build succeeds, transforms weren't ran as expected.\n")
 
 mapping {
-	def yarn115 = "net.fabricmc:yarn:1.21.1+build.3:v2"
+	def yarn115 = "net.fabricmc:yarn:24w14potato+build.4:v2"
 	registerMapping(project, "net.minecraft", "net.fabricmc:intermediary:1.15.2")
 	registerMapping(project, "net.minecraft", yarn115)
 	registerNamespaceTranslator {
