@@ -1,9 +1,9 @@
 plugins {
 	id 'java-library'
 	id 'maven-publish'
-	id "com.gradle.plugin-publish" version "1.0.0"
+	id "com.gradle.plugin-publish" version "1.2.2"
 	id 'java-gradle-plugin'
-	id("dev.minco.gradle.defaults-plugin") version "0.2.62"
+	id("dev.minco.gradle.defaults-plugin") version "0.2.67"
 }
 
 sourceSets.main.java.srcDirs = files('src')
@@ -31,23 +31,23 @@ repositories {
 }
 
 dependencies {
-	compileOnly "org.jetbrains:annotations:23.0.0"
-	compileOnly "org.checkerframework:checker-qual:3.26.0"
+	compileOnly "org.jetbrains:annotations:23.1.0"
+	compileOnly "org.checkerframework:checker-qual:3.47.0"
 	testImplementation "junit:junit:4.13.2"
 	// TODO: actually test Mixin at the same time
 	//api 'org.minimallycorrect.mixin:Mixin:0.0.6'
-	implementation 'net.fabricmc:tiny-remapper:0.8.6'
+	implementation 'net.fabricmc:tiny-remapper:0.10.4'
 	implementation 'net.fabricmc:tiny-mappings-parser:0.3.0+build.17'
 	implementation 'com.google.guava:guava:31.1-jre'
 
-	compileOnly 'org.projectlombok:lombok:1.18.24'
-	annotationProcessor 'org.projectlombok:lombok:1.18.24'
-	testCompileOnly 'org.projectlombok:lombok:1.18.24'
-	testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+	compileOnly 'org.projectlombok:lombok:1.18.34'
+	annotationProcessor 'org.projectlombok:lombok:1.18.34'
+	testCompileOnly 'org.projectlombok:lombok:1.18.34'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 
 	// https://junit.org/junit5/docs/current/user-guide/#running-tests-build
-	testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.1")
-	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.1")
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.11.0")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.0")
 }
 
 test {
@@ -64,10 +64,10 @@ allprojects {
 			resolutionStrategy {
 				failOnVersionConflict()
 
-				force('org.checkerframework:checker-qual:3.26.0')
+				force('org.checkerframework:checker-qual:3.47.0')
 				force('com.google.guava:guava:31.1-jre')
 				force('com.google.code.findbugs:jsr305:3.0.2')
-				def asmVer = '9.4'
+				def asmVer = '9.7'
 				force("org.ow2.asm:asm:$asmVer")
 				force("org.ow2.asm:asm-tree:$asmVer")
 				force("org.ow2.asm:asm-analysis:$asmVer")
