@@ -38,7 +38,7 @@ dependencies {
 	//api 'org.minimallycorrect.mixin:Mixin:0.0.6'
 	implementation 'net.fabricmc:tiny-remapper:0.10.4'
 	implementation 'net.fabricmc:tiny-mappings-parser:0.3.0+build.17'
-	implementation 'com.google.guava:guava:31.1-jre'
+	implementation 'com.google.guava:guava:33.3.0-jre'
 
 	compileOnly 'org.projectlombok:lombok:1.18.34'
 	annotationProcessor 'org.projectlombok:lombok:1.18.34'
@@ -65,7 +65,7 @@ allprojects {
 				failOnVersionConflict()
 
 				force('org.checkerframework:checker-qual:3.47.0')
-				force('com.google.guava:guava:31.1-jre')
+				force('com.google.guava:guava:33.3.0-jre')
 				force('com.google.code.findbugs:jsr305:3.0.2')
 				def asmVer = '9.7'
 				force("org.ow2.asm:asm:$asmVer")
