@@ -101,7 +101,7 @@ mapping {
 	registerMapping(project, "net.minecraft", yarn115)
 	registerNamespaceTranslator {
 		if (it == "$yarn115:intermediary") {
-			return "net.fabricmc:intermediary:1.21.1:intermediary"
+			return "net.fabricmc:intermediary:24w14potato:intermediary"
 		}
 	}
 	registerDefaultMappedConfiguration(project, "net.minecraft", "$yarn115:named")
